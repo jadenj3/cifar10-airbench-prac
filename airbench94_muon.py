@@ -83,7 +83,7 @@ class Muon(torch.optim.Optimizer):
                 p.data.mul_(len(p.data)**0.5 / p.data.norm()) # normalize the weight
                 update = zeropower_via_newtonschulz5(g.reshape(len(g), -1)).view(g.shape) # whiten the update
                 mask = (update*p.grad > 0).to(p.grad.dtype)
-                mask.div_(mask.mean().clamp_(min=1e-3))
+                #mask.div_(mask.mean().clamp_(min=1e-3))
                 update = update * mask
                 p.data.add_(update, alpha=-lr) # take a step
 
