@@ -81,10 +81,11 @@ class Muon(torch.optim.Optimizer):
                 g = g.add(buf, alpha=momentum) if group["nesterov"] else buf
 
                 p.data.mul_(len(p.data)**0.5 / p.data.norm()) # normalize the weight
+                mask = (g * p.grad > 0).to(p.grad.dtype)
+                g = g * mask
                 update = zeropower_via_newtonschulz5(g.reshape(len(g), -1)).view(g.shape) # whiten the update
-                mask = (update*p.grad > 0).to(p.grad.dtype)
                 #mask.div_(mask.mean().clamp_(min=1e-3))
-                update = update * mask
+                #update = update * mask
                 p.data.add_(update, alpha=-lr) # take a step
 
 #############################################
