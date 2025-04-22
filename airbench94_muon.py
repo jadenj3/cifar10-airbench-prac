@@ -434,7 +434,7 @@ def main(run, model):
     epoch = "eval"
     print_training_details(locals(), is_final_entry=True)
 
-    return tta_val_acc
+    return tta_val_acc, time_seconds
 
 if __name__ == "__main__":
 
@@ -443,13 +443,41 @@ if __name__ == "__main__":
     model.compile(mode="max-autotune")
 
     print_columns(logging_columns_list, is_head=True)
+
+    # Run warmup separately (we usually don't include warmup in mean time)
     main("warmup", model)
-    accs = torch.tensor([main(run, model) for run in range(200)])
-    print("Mean: %.4f    Std: %.4f" % (accs.mean(), accs.std()))
+
+    # --- MODIFICATION START ---
+    num_runs = 200 # Or however many runs you intend
+    accs_list = []
+    run_times = [] # List to store the duration of each run
+
+    # Use a standard loop to easily capture both return values
+    for run_idx in range(num_runs):
+        # Capture both accuracy and time returned by main
+        acc, time_taken = main(run_idx, model)
+        accs_list.append(acc)
+        run_times.append(time_taken) # Add the time for this run to the list
+
+    accs = torch.tensor(accs_list) # Convert collected accuracies to a tensor
+    # --- MODIFICATION END ---
+
+
+    print("Mean Accuracy: %.4f   Std: %.4f" % (accs.mean(), accs.std()))
+
+    # --- MODIFICATION START ---
+    # Calculate and print the mean run time
+    if run_times: # Check if the list is not empty
+        mean_run_time = sum(run_times) / len(run_times)
+        print("Mean Time Per Run: %.4f seconds" % mean_run_time)
+    # --- MODIFICATION END ---
+
 
     log_dir = os.path.join("logs", str(uuid.uuid4()))
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "log.pt")
+    # Note: The log file still only saves code and accuracies as per original script
+    # If you wanted to save times too, you'd add: 'times': torch.tensor(run_times)
     torch.save(dict(code=code, accs=accs), log_path)
     print(os.path.abspath(log_path))
 
