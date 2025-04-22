@@ -354,7 +354,7 @@ def main(run, model):
     if run == "warmup":
         # The only purpose of the first run is to warmup the compiled model, so we can use dummy data
         train_loader.labels = torch.randint(0, 10, size=(len(train_loader.labels),), device=train_loader.labels.device)
-    total_train_steps = ceil(7 * len(train_loader) + 0.5*len(train_loader))
+    total_train_steps = ceil(8 * len(train_loader))
     whiten_bias_train_steps = ceil(3 * len(train_loader))
 
     # Create optimizers and learning rate schedulers
